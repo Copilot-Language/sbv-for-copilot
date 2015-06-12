@@ -569,7 +569,7 @@ instance Boolean SBool where
   bnot (SBV b) = SBV (svNot b)
   SBV a &&& SBV b = SBV (svAnd a b)
   SBV a ||| SBV b = SBV (svOr a b)
-  SBV a <+> SBV b = SBV (svXOr a b)
+  SBV a <+> SBV b = SBV (svOr (svAnd (a) (svNot b)) (svAnd (svNot a) (b)))
 
 -- | Returns (symbolic) true if all the elements of the given list are different.
 allDifferent :: EqSymbolic a => [a] -> SBool
