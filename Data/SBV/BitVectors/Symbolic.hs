@@ -118,6 +118,7 @@ data Op = Plus | Times | Minus | UNeg | Abs
         | Equal | NotEqual
         | LessThan | GreaterThan | LessEq | GreaterEq
         | Ite
+	| LAnd | LOr
         | And | Or  | XOr | Not
         | Shl Int | Shr Int | Rol Int | Ror Int
         | Extract Int Int -- Extract i j: extract bits i to j. Least significant bit is 0 (big-endian)

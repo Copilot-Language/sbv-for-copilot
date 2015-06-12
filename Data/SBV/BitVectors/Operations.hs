@@ -21,7 +21,7 @@ module Data.SBV.BitVectors.Operations
   , svDivide, svQuot, svRem
   , svEqual, svNotEqual
   , svLessThan, svGreaterThan, svLessEq, svGreaterEq
-  , svAnd, svOr, svXOr, svNot
+  , svLAnd, svLOr, svAnd, svOr, svXOr, svNot
   , svShl, svShr, svRol, svRor
   , svExtract, svJoin
   , svUninterpreted
@@ -183,6 +183,37 @@ svGreaterEq x y
   | isConcreteMax x = svTrue
   | isConcreteMin y = svTrue
   | True            = liftSym2B (mkSymOpSC (eqOpt trueSW) GreaterEq) rationalCheck (>=) (>=) (>=) (>=) (uiLift ">=" (>=)) x y
+
+
+-- | Lazy and.
+svLAnd :: SVal -> SVal -> SVal
+svLAnd x y
+  | isConcreteZero x = x
+  | isConcreteOnes x = y
+  | isConcreteZero y = y
+  | isConcreteOnes y = x
+  | True             = liftSym2 (mkSymOpSC opt LAnd) (const (const True)) (noReal ".&.") (.&.) (noFloat ".&.") (noDouble ".&.") x y
+  where opt a b
+          | a == falseSW || b == falseSW = Just falseSW
+          | a == trueSW                  = Just b
+          | b == trueSW                  = Just a
+          | True                         = Nothing
+
+-- | Lazy or.
+svLOr :: SVal -> SVal -> SVal
+svLOr x y
+  | isConcreteZero x = y
+  | isConcreteOnes x = x
+  | isConcreteZero y = x
+  | isConcreteOnes y = y
+  | True             = liftSym2 (mkSymOpSC opt LOr) (const (const True))
+                       (noReal ".|.") (.|.) (noFloat ".|.") (noDouble ".|.") x y
+  where opt a b
+          | a == trueSW || b == trueSW = Just trueSW
+          | a == falseSW               = Just b
+          | b == falseSW               = Just a
+          | True                       = Nothing
+
 
 -- | Bitwise and.
 svAnd :: SVal -> SVal -> SVal
