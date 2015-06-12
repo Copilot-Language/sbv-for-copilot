@@ -488,7 +488,7 @@ ppExpr cfg consts (SBVApp op opArgs) = p op (map (showSW cfg consts) opArgs)
   where rtc = cgRTC cfg
         cBinOps = [ (Plus, "+"),  (Times, "*"), (Minus, "-")
                   , (Equal, "=="), (NotEqual, "!="), (LessThan, "<"), (GreaterThan, ">"), (LessEq, "<="), (GreaterEq, ">=")
-                  , (And, "&"), (Or, "|"), (XOr, "^")
+                  , (And, "&&"), (Or, "||"), (XOr, "^")
                   ]
         uninterpret "to_real" as
           | [a] <- as            = text "(SReal)" <+> a
