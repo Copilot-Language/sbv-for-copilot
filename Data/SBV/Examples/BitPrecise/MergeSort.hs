@@ -89,6 +89,6 @@ correctness n = prove $ do xs <- mkFreeVars n
 -- by hand, it's a faithful rendering of all the operations merge-sort would do as
 -- described by its Haskell counterpart.
 codeGen :: Int -> IO ()
-codeGen n = compileToC (Just ("mergeSort" ++ show n)) "mergeSort" $ do
+codeGen n = compileToC (Just ("mergeSort" ++ show n)) "mergeSort" "" $ do
                 xs <- cgInputArr n "xs"
                 cgOutputArr "ys" (mergeSort xs)

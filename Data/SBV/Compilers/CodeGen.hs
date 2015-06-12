@@ -35,7 +35,7 @@ import Data.SBV.BitVectors.Symbolic (svToSymSW, svMkSymVar, outputSVal)
 -- | Abstract over code generation for different languages
 class CgTarget a where
   targetName :: a -> String
-  translate  :: a -> CgConfig -> String -> CgState -> Result -> CgPgmBundle
+  translate  :: a -> CgConfig -> String -> CgState -> Result -> String -> CgPgmBundle
 
 -- | Options for code-generation.
 data CgConfig = CgConfig {
@@ -280,8 +280,8 @@ instance Show CgPgmBundle where
 
 -- | Generate code for a symbolic program, returning a Code-gen bundle, i.e., collection
 -- of makefiles, source code, headers, etc.
-codeGen :: CgTarget l => l -> CgConfig -> String -> SBVCodeGen () -> IO CgPgmBundle
-codeGen l cgConfig nm (SBVCodeGen comp) = do
+codeGen :: CgTarget l => l -> CgConfig -> String -> SBVCodeGen () -> String -> IO CgPgmBundle
+codeGen l cgConfig nm (SBVCodeGen comp) comm = do
    (((), st'), res) <- runSymbolic' CodeGen $ runStateT comp initCgState { cgFinalConfig = cgConfig }
    let st = st' { cgInputs       = reverse (cgInputs st')
                 , cgOutputs      = reverse (cgOutputs st')
@@ -290,7 +290,7 @@ codeGen l cgConfig nm (SBVCodeGen comp) = do
        dupNames = allNamedVars \\ nub allNamedVars
    unless (null dupNames) $
         error $ "SBV.codeGen: " ++ show nm ++ " has following argument names duplicated: " ++ unwords dupNames
-   return $ translate l (cgFinalConfig st) nm st res
+   return $ translate l (cgFinalConfig st) nm st res comm
 
 -- | Render a code-gen bundle to a directory or to stdout
 renderCgPgmBundle :: Maybe FilePath -> CgPgmBundle -> IO ()

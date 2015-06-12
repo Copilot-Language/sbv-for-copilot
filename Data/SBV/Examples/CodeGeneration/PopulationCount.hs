@@ -226,7 +226,7 @@ fastPopCountIsCorrect x = popCountFast x .== popCountSlow x
 -- }
 -- == END: "popCount.c" ==================
 genPopCountInC :: IO ()
-genPopCountInC = compileToC Nothing "popCount" $ do
+genPopCountInC = compileToC Nothing "popCount" "" $ do
         cgSetDriverValues [0x1b02e143e4f0e0e5]  -- remove this line to get a random test value
         x <- cgInput "x"
         cgReturn $ popCountFast x

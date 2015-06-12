@@ -22,7 +22,7 @@ testSuite :: SBVTestSuite
 testSuite = mkTestSuite $ \goldCheck -> test [
    "mergeSort" ~: mergeC `goldCheck` "merge.gold"
  ]
- where mergeC = compileToC' "merge" $ do
+ where mergeC = compileToC' "merge" "" $ do
                    cgSetDriverValues [10, 6, 4, 82, 71]
                    xs <- cgInputArr 5 "xs"
                    cgOutputArr "ys" (mergeSort xs)

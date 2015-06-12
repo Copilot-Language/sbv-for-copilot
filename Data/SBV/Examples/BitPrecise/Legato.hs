@@ -295,7 +295,7 @@ correctnessTheorem = proveWith yices{timing = True} $
 
 -- | Generate a C program that implements Legato's algorithm automatically.
 legatoInC :: IO ()
-legatoInC = compileToC Nothing "runLegato" $ do
+legatoInC = compileToC Nothing "runLegato" "" $ do
                 x <- cgInput "x"
                 y <- cgInput "y"
                 let (hi, lo) = runLegato (0, x) (1, y) 2 (initMachine (mkSFunArray (const 0)) (0, 0, 0, false, false))

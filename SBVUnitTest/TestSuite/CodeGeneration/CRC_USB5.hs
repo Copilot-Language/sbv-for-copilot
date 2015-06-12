@@ -23,7 +23,7 @@ testSuite = mkTestSuite $ \goldCheck -> test [
    "crcUSB5-1" ~: genC crcUSB  `goldCheck` "crcUSB5_1.gold"
  , "crcUSB5-2" ~: genC crcUSB' `goldCheck` "crcUSB5_2.gold"
  ]
- where genC f = compileToC' "crcUSB5" $ do
+ where genC f = compileToC' "crcUSB5" "" $ do
                    cgSetDriverValues [0xFEDC]
                    msg <- cgInput "msg"
                    cgReturn $ f msg

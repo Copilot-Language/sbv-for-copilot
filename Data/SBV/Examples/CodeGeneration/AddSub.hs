@@ -132,7 +132,7 @@ addSub x y = (x+y, x-y)
 -- == END: "addSub.c" ==================
 --
 genAddSub :: IO ()
-genAddSub = compileToC outDir "addSub" $ do
+genAddSub = compileToC outDir "addSub" "" $ do
         x <- cgInput "x"
         y <- cgInput "y"
         -- leave the cgDriverVals call out for generating a driver with random values

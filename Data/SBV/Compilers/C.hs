@@ -37,35 +37,45 @@ import Data.SBV.Compilers.CodeGen
 --   * The first argument is the directory name under which the files will be saved. To save
 --     files in the current directory pass @'Just' \".\"@. Use 'Nothing' for printing to stdout.
 --
---   * The second argument is the name of the C function to generate.
+--   * The second argument is the commentary to add (ACSL)
 --
---   * The final argument is the function to be compiled.
+--   * The third argument is the name of the C function to generate.
+--
+--   * The fourth argument is the function to be compiled.
 --
 -- Compilation will also generate a @Makefile@,  a header file, and a driver (test) program, etc.
-compileToC :: Maybe FilePath -> String -> SBVCodeGen () -> IO ()
-compileToC mbDirName nm f = compileToC' nm f >>= renderCgPgmBundle mbDirName
+compileToC :: Maybe FilePath -> String -> String -> SBVCodeGen ()  -> IO ()
+compileToC mbDirName comm nm f  = compileToC' nm comm f >>= renderCgPgmBundle mbDirName
 
 -- | Lower level version of 'compileToC', producing a 'CgPgmBundle'
-compileToC' :: String -> SBVCodeGen () -> IO CgPgmBundle
-compileToC' nm f = do rands <- randoms `fmap` newStdGen
-                      codeGen SBVToC (defaultCgConfig { cgDriverVals = rands }) nm f
-
+compileToC' :: String -> String -> SBVCodeGen () -> IO CgPgmBundle
+compileToC' nm comm f = do 
+			rands <- randoms `fmap` newStdGen
+                      	codeGen SBVToC (defaultCgConfig { cgDriverVals = rands }) nm f comm
 -- | Create code to generate a library archive (.a) from given symbolic functions. Useful when generating code
 -- from multiple functions that work together as a library.
+-- 
+-- * The first argument is the directory name under which the files will be saved. To save
+-- files in the current directory pass @'Just' \".\"@. Use 'Nothing' for printing to stdout.
+-- 
+-- * The second argument is the name of the archive to generate.
+-- 
+-- * The third argument is the list of functions to include, in the form of function-name/code pairs/commentary, similar
+-- to the second and third arguments of 'compileToC', except in a list.
 --
---   * The first argument is the directory name under which the files will be saved. To save
---     files in the current directory pass @'Just' \".\"@. Use 'Nothing' for printing to stdout.
+--   * The fourth argument is the commentary to add (ACSL)
 --
---   * The second argument is the name of the archive to generate.
---
---   * The third argument is the list of functions to include, in the form of function-name/code pairs, similar
---     to the second and third arguments of 'compileToC', except in a list.
-compileToCLib :: Maybe FilePath -> String -> [(String, SBVCodeGen ())] -> IO ()
-compileToCLib mbDirName libName comps = compileToCLib' libName comps >>= renderCgPgmBundle mbDirName
+uncurry3 :: (a -> b -> c -> d) -> (a,b,c)->d
+uncurry3 fn = \(a,b,c) -> fn a b c
 
+compileToCOther :: String -> SBVCodeGen () -> String -> IO CgPgmBundle
+compileToCOther a b c = compileToC' a c b
+
+compileToCLib :: Maybe FilePath -> String -> [(String, SBVCodeGen (), String)] -> IO ()
+compileToCLib mbDirName libName comps = compileToCLib' libName comps >>= renderCgPgmBundle mbDirName
 -- | Lower level version of 'compileToCLib', producing a 'CgPgmBundle'
-compileToCLib' :: String -> [(String, SBVCodeGen ())] -> IO CgPgmBundle
-compileToCLib' libName comps = mergeToLib libName `fmap` mapM (uncurry compileToC') comps
+compileToCLib' :: String -> [(String, SBVCodeGen (), String)] -> IO CgPgmBundle
+compileToCLib' libName comps = mergeToLib libName `fmap` mapM (uncurry3 compileToCOther) comps
 
 ---------------------------------------------------------------------------
 -- * Implementation
@@ -86,8 +96,8 @@ die msg = error $ "SBV->C: Unexpected: " ++ msg
 tbd :: String -> a
 tbd msg = error $ "SBV->C: Not yet supported: " ++ msg
 
-cgen :: CgConfig -> String -> CgState -> Result -> CgPgmBundle
-cgen cfg nm st sbvProg
+cgen :: CgConfig -> String -> CgState -> Result -> String -> CgPgmBundle
+cgen cfg nm st sbvProg comm
    -- we rnf the main pg and the sig to make sure any exceptions in type conversion pop-out early enough
    -- this is purely cosmetic, of course..
    = rnf (render sig) `seq` rnf (render (vcat body)) `seq` result
@@ -97,7 +107,7 @@ cgen cfg nm st sbvProg
                                , (nmd ++ ".c", (CgDriver,         genDriver cfg randVals nm ins outs mbRet))
                                , (nm  ++ ".c", (CgSource,         body))
                                ]
-        body = genCProg cfg nm sig sbvProg ins outs mbRet extDecls
+        body = genCProg cfg nm sig sbvProg ins outs mbRet extDecls comm
         bundleKind = (cgInteger cfg, cgReal cfg)
         randVals = cgDriverVals cfg
         filt xs  = [c | c@(_, (k, _)) <- xs, need k]
@@ -396,8 +406,8 @@ genDriver cfg randVals fn inps outs mbRet = [pre, header, body, post]
                         spec      = specifier cfg sw
 
 -- | Generate the C program
-genCProg :: CgConfig -> String -> Doc -> Result -> [(String, CgVal)] -> [(String, CgVal)] -> Maybe SW -> Doc -> [Doc]
-genCProg cfg fn proto (Result kindInfo _tvals cgs ins preConsts tbls arrs _ _ (SBVPgm asgns) cstrs _) inVars outVars mbRet extDecls
+genCProg :: CgConfig -> String -> Doc -> Result -> [(String, CgVal)] -> [(String, CgVal)] -> Maybe SW -> Doc -> String -> [Doc]
+genCProg cfg fn proto (Result kindInfo _tvals cgs ins preConsts tbls arrs _ _ (SBVPgm asgns) cstrs _) inVars outVars mbRet extDecls comm
   | isNothing (cgInteger cfg) && KUnbounded `Set.member` kindInfo
   = error $ "SBV->C: Unbounded integers are not supported by the C compiler."
           ++ "\nUse 'cgIntegerSize' to specify a fixed size for SInteger representation."
@@ -424,6 +434,8 @@ genCProg cfg fn proto (Result kindInfo _tvals cgs ins preConsts tbls arrs _ _ (S
        header = text "#include" <+> doubleQuotes (nm <> text ".h")
        post   = text ""
              $$ vcat (map codeSeg cgs)
+	     $$ text "/*ACSL following*/"
+             $$ text comm
              $$ extDecls
              $$ proto
              $$ text "{"

@@ -512,7 +512,7 @@ aes128IsCorrect (i0, i1, i2, i3) (k0, k1, k2, k3) = pt .== pt'
 --
 -- The GNU C-compiler does a fine job of optimizing this straightline code to generate a fairly efficient C implementation.
 cgAES128BlockEncrypt :: IO ()
-cgAES128BlockEncrypt = compileToC Nothing "aes128BlockEncrypt" $ do
+cgAES128BlockEncrypt = compileToC Nothing "aes128BlockEncrypt" "" $ do
         pt  <- cgInputArr 4 "pt"        -- plain-text as an array of 4 Word32's
         key <- cgInputArr 4 "key"       -- key as an array of 4 Word32s
         -- Use the test values from Appendix C.1 of the AES standard as the driver values
@@ -535,10 +535,10 @@ cgAES128BlockEncrypt = compileToC Nothing "aes128BlockEncrypt" $ do
 -}
 
 -- | Components of the AES-128 implementation that the library is generated from
-aes128LibComponents :: [(String, SBVCodeGen ())]
-aes128LibComponents = [ ("aes128KeySchedule",  keySchedule)
-                      , ("aes128BlockEncrypt", enc128)
-                      , ("aes128BlockDecrypt", dec128)
+aes128LibComponents :: [(String, SBVCodeGen (), String)]
+aes128LibComponents = [ ("aes128KeySchedule",  keySchedule, "test")
+                      , ("aes128BlockEncrypt", enc128, "")
+                      , ("aes128BlockDecrypt", dec128, "")
                       ]
   where -- key-schedule
         keySchedule = do key <- cgInputArr 4 "key"     -- key

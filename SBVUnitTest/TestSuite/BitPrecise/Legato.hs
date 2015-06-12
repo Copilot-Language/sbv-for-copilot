@@ -36,7 +36,7 @@ testSuite = mkTestSuite $ \goldCheck -> test [
                        flagC   <- free "flagC"
                        flagZ   <- free "flagZ"
                        output $ legatoIsCorrect mem (addrX, x) (addrY, y) addrLow (regX, regA, memVals, flagC, flagZ)
-       legatoC = compileToC' "legatoMult" $ do
+       legatoC = compileToC' "legatoMult" "" $ do
                     cgSetDriverValues [87, 92]
                     cgPerformRTCs True
                     x <- cgInput "x"

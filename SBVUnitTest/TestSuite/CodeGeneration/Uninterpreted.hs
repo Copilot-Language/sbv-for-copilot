@@ -22,7 +22,7 @@ testSuite :: SBVTestSuite
 testSuite = mkTestSuite $ \goldCheck -> test [
    "cgUninterpret" ~: genC `goldCheck` "cgUninterpret.gold"
  ]
- where genC = compileToC' "tstShiftLeft" $ do
+ where genC = compileToC' "tstShiftLeft" "" $ do
                   cgSetDriverValues [1, 2, 3]
                   [x, y, z] <- cgInputArr 3 "vs"
                   cgReturn $ tstShiftLeft x y z
