@@ -676,7 +676,7 @@ genLibMake ifdr libName fs ldFlags = foldr1 ($$) [l | (True, l) <- lns]
              , (True,  text "# include any user-defined .mk file in the current directory.")
              , (True,  text "-include *.mk")
              , (True,  text "")
-             , (True,  text "CC=gcc")
+             , (True,  text "CC?=gcc")
              , (True,  text "CCFLAGS?=-Wall -O3 -DNDEBUG -fomit-frame-pointer")
              , (ifld,  text "LDFLAGS?=" <> text (unwords ldFlags))
              , (True,  text "AR=ar")
